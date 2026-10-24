@@ -1,0 +1,23 @@
+node_modules/
+
+# Secrets: commit .env.example, never .env
+.env
+.env.*
+!.env.example
+
+# Files users upload (the default avatar is kept)
+uploads/avatars/*
+uploads/documents/*
+!uploads/**/.gitkeep
+
+# Logs and OS/editor files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+coverage/
+
+# Build output: the browser client is compiled from client/src (npm run build)
+client/js/

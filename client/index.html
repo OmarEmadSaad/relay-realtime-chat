@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Relay Chat</title>
+    <meta name="description" content="A real-time chat app built with Socket.IO, Express, MongoDB and JWT authentication." />
+    <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <!-- Applies the saved theme before first paint (no flash) -->
+    <script src="js/theme-init.js"></script>
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body>
+    <noscript>Relay Chat needs JavaScript to run.</noscript>
+
+    <!-- Shown while checking the saved session -->
+    <div class="boot" id="boot" role="status" aria-live="polite">
+      <img src="assets/logo.svg" alt="" width="48" height="48" />
+      <div class="spinner" aria-hidden="true"></div>
+      <span class="visually-hidden">Loading…</span>
+    </div>
+
+    <!-- Login / sign up -->
+    <main class="auth" id="auth-screen" hidden>
+      <section class="auth__intro" aria-labelledby="intro-title">
+        <div class="brand">
+          <img src="assets/logo.svg" alt="" width="36" height="36" />
+          <span>Relay</span>
+        </div>
+        <h1 id="intro-title">Conversations that arrive the moment they're sent.</h1>
+        <p class="auth__lead">
+          A real-time messaging app built on Socket.IO, Express and MongoDB, with JWT
+          authentication and server-side authorization for every room.
+        </p>
+        <ul class="feature-list">
+          <li><span class="feature-dot"></span>Instant delivery, typing indicators and read receipts</li>
+          <li><span class="feature-dot"></span>Presence that stays correct across tabs and devices</li>
+          <li><span class="feature-dot"></span>Private and group conversations stored in MongoDB</li>
+          <li><span class="feature-dot"></span>Reconnects and refreshes expired sessions on its own</li>
+        </ul>
+      </section>
+
+      <section class="auth__panel">
+        <div class="card auth-card">
+          <div class="tabs" role="tablist" aria-label="Account">
+            <button class="tab is-active" role="tab" aria-selected="true" id="tab-login" aria-controls="login-form" type="button">Sign in</button>
+            <button class="tab" role="tab" aria-selected="false" id="tab-register" aria-controls="register-form" type="button">Create account</button>
+          </div>
+
+          <form id="login-form" class="form" role="tabpanel" aria-labelledby="tab-login" novalidate>
+            <label class="field">
+              <span>Email</span>
+              <input name="email" type="email" autocomplete="username" required />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input name="password" type="password" autocomplete="current-password" required />
+            </label>
+            <p class="form__error" role="alert" hidden></p>
+            <button class="btn btn--primary btn--block" type="submit">
+              <span class="btn__label">Sign in</span>
+            </button>
+          </form>
+
+          <form id="register-form" class="form" role="tabpanel" aria-labelledby="tab-register" novalidate hidden>
+            <div class="field-row">
+              <label class="field">
+                <span>First name</span>
+                <input name="firstName" autocomplete="given-name" minlength="2" maxlength="50" required />
+              </label>
+              <label class="field">
+                <span>Last name</span>
+                <input name="lastName" autocomplete="family-name" minlength="2" maxlength="50" required />
+              </label>
+            </div>
+            <label class="field">
+              <span>Email</span>
+              <input name="email" type="email" autocomplete="email" required />
+            </label>
+            <label class="field">
+              <span>Phone number</span>
+              <input name="phoneNumber" type="tel" autocomplete="tel" placeholder="+20 100 000 0000" required />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input name="password" type="password" autocomplete="new-password" minlength="8" required />
+              <small>At least 8 characters.</small>
+            </label>
+            <p class="form__error" role="alert" hidden></p>
+            <button class="btn btn--primary btn--block" type="submit">
+              <span class="btn__label">Create account</span>
+            </button>
+          </form>
+
+          <div class="demo" id="demo-accounts" hidden>
+            <div class="demo__title">
+              <span>Try a demo account</span>
+              <small>Fills in the form</small>
+            </div>
+            <div class="demo__list" id="demo-list"></div>
+          </div>
+        </div>
+        <p class="auth__footnote">Tip: sign in as two different demo users in two browsers to see messages, typing and presence update live.</p>
+      </section>
+    </main>
+
+    <!-- The chat app -->
+    <div class="app" id="app-screen" hidden>
+      <aside class="sidebar" aria-label="Conversations">
+        <header class="sidebar__header">
+          <div class="me" id="me"></div>
+          <div class="icon-row">
+            <button class="icon-btn" id="btn-new-chat" type="button" title="New conversation" aria-label="New conversation"></button>
+            <button class="icon-btn" id="btn-theme" type="button" title="Toggle theme" aria-label="Toggle dark mode"></button>
+            <button class="icon-btn" id="btn-about" type="button" title="About this project" aria-label="About this project"></button>
+            <button class="icon-btn" id="btn-logout" type="button" title="Sign out" aria-label="Sign out"></button>
+          </div>
+        </header>
+
+        <div class="connection" id="connection" role="status" aria-live="polite" hidden></div>
+
+        <div class="search">
+          <span class="search__icon" aria-hidden="true"></span>
+          <input id="search" type="search" placeholder="Search conversations and messages" aria-label="Search conversations and messages" autocomplete="off" />
+        </div>
+
+        <div class="sidebar__body" id="sidebar-body">
+          <div class="conv-list" id="conversation-list" role="list"></div>
+          <div id="search-results" hidden></div>
+        </div>
+      </aside>
+
+      <section class="chat" id="chat" aria-label="Conversation">
+        <div class="chat__empty" id="chat-empty">
+          <div class="empty-art" aria-hidden="true"></div>
+          <h2>Pick up where you left off</h2>
+          <p>Choose a conversation from the list, or start a new one with anyone on Relay.</p>
+          <button class="btn btn--primary" id="btn-empty-new" type="button">Start a conversation</button>
+        </div>
+
+        <div class="chat__main" id="chat-main" hidden>
+          <header class="chat__header">
+            <button class="icon-btn chat__back" id="btn-back" type="button" aria-label="Back to conversations"></button>
+            <div class="chat__who" id="chat-who"></div>
+            <div class="icon-row">
+              <button class="icon-btn" id="btn-members" type="button" title="Members" aria-label="Show members" hidden></button>
+              <button class="icon-btn icon-btn--danger" id="btn-leave" type="button" title="Leave group" aria-label="Leave group" hidden></button>
+            </div>
+          </header>
+
+          <div class="messages" id="messages" tabindex="0" aria-label="Messages" aria-live="polite" aria-relevant="additions">
+            <div class="messages__inner" id="messages-inner"></div>
+          </div>
+
+          <button class="jump" id="btn-jump" type="button" hidden>New messages ↓</button>
+
+          <div class="typing" id="typing" aria-live="polite"></div>
+
+          <form class="composer" id="composer" autocomplete="off">
+            <label class="visually-hidden" for="composer-input">Message</label>
+            <textarea id="composer-input" rows="1" maxlength="2000" placeholder="Write a message…" enterkeyhint="send"></textarea>
+            <span class="composer__count" id="composer-count" hidden></span>
+            <button class="send-btn" id="btn-send" type="submit" aria-label="Send message" disabled></button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- Dialogs -->
+    <dialog class="modal" id="new-chat-dialog" aria-labelledby="new-chat-title">
+      <form method="dialog" class="modal__inner" id="new-chat-form">
+        <header class="modal__header">
+          <h2 id="new-chat-title">New conversation</h2>
+          <button class="icon-btn" value="cancel" formnovalidate type="submit" aria-label="Close" data-icon="close"></button>
+        </header>
+        <div class="segmented" role="tablist" aria-label="Conversation type">
+          <button type="button" class="segmented__btn is-active" data-mode="direct" role="tab" aria-selected="true">Direct message</button>
+          <button type="button" class="segmented__btn" data-mode="group" role="tab" aria-selected="false">Group</button>
+        </div>
+        <label class="field" id="group-name-field" hidden>
+          <span>Group name</span>
+          <input id="group-name" maxlength="60" placeholder="e.g. Weekend trip" />
+        </label>
+        <div class="search search--inset">
+          <span class="search__icon" aria-hidden="true"></span>
+          <input id="contact-search" type="search" placeholder="Search people" aria-label="Search people" autocomplete="off" />
+        </div>
+        <div class="contact-list" id="contact-list" role="list"></div>
+        <p class="form__error" id="new-chat-error" role="alert" hidden></p>
+        <footer class="modal__footer" id="group-footer" hidden>
+          <span class="muted" id="group-count">Select at least 2 people</span>
+          <button class="btn btn--primary" type="button" id="btn-create-group" disabled>Create group</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="members-dialog" aria-labelledby="members-title">
+      <form method="dialog" class="modal__inner">
+        <header class="modal__header">
+          <h2 id="members-title">Members</h2>
+          <button class="icon-btn" value="cancel" type="submit" aria-label="Close" data-icon="close"></button>
+        </header>
+        <div class="contact-list" id="members-list" role="list"></div>
+      </form>
+    </dialog>
+
+    <dialog class="modal modal--wide" id="about-dialog" aria-labelledby="about-title">
+      <form method="dialog" class="modal__inner about">
+        <header class="modal__header">
+          <h2 id="about-title">About this project</h2>
+          <button class="icon-btn" value="cancel" type="submit" aria-label="Close" data-icon="close"></button>
+        </header>
+        <div class="about__body">
+          <p>
+            Relay is a full-stack messaging app: an Express 5 REST API and a Socket.IO server share one
+            Node.js process and one MongoDB database. Everything is TypeScript, and this UI is compiled to plain JavaScript modules with no framework.
+          </p>
+          <h3>Why Socket.IO instead of polling?</h3>
+          <p>
+            Polling asks "anything new?" every few seconds, so messages arrive late and most requests return
+            nothing. A Socket.IO connection stays open, so the server pushes each message, typing indicator
+            and presence change the moment it happens, and falls back to long-polling when WebSockets are blocked.
+          </p>
+          <h3>How the pieces fit</h3>
+          <ul>
+            <li><strong>REST</strong> handles login, conversation lists and paginated history.</li>
+            <li><strong>Socket.IO</strong> carries live events: <code>message:send</code>, <code>message:new</code>, <code>typing:start</code>, <code>presence:update</code>, <code>message:read</code>…</li>
+            <li><strong>Authentication:</strong> the socket handshake carries the JWT access token. The server verifies it, loads the user and never trusts ids sent by the client.</li>
+            <li><strong>Authorization:</strong> every join, send, read and history request checks conversation membership in MongoDB. Knowing a room id is not enough.</li>
+            <li><strong>Rooms:</strong> each socket joins a personal <code>user:&lt;id&gt;</code> room, so messages reach all of a member's tabs and devices. A <code>conversation:&lt;id&gt;</code> room carries typing indicators for whoever has that chat open.</li>
+            <li><strong>Persistence:</strong> messages are stored in MongoDB with a compound index for history pages and a unique <code>(sender, clientId)</code> index so retries never create duplicates.</li>
+            <li><strong>Presence</strong> counts sockets per user, so closing one of two tabs doesn't mark you offline.</li>
+          </ul>
+          <p class="muted">The README in the repository covers the full architecture, event reference and the trade-offs behind it.</p>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toasts" id="toasts" aria-live="assertive"></div>
+  </body>
+</html>

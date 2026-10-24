@@ -1,0 +1,23 @@
+{
+  // Server, scripts and tests. Node runs the .ts files directly (built-in type
+  // stripping), so tsc only type-checks: `npm run typecheck`.
+  // erasableSyntaxOnly keeps us to syntax Node can strip (no enums, namespaces
+  // or constructor parameter properties).
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src", "scripts", "tests", "shared"]
+}
