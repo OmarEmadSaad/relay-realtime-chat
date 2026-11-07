@@ -1,5 +1,7 @@
 # Relay: real-time chat with Socket.IO
 
+**Live demo:** https://relay-chat-omar.bonto.run (sign in with `lina@demo.example.com` / `DemoChat2026!`; free hosting, so the first visit can take a few seconds to wake up)
+
 A full-stack messaging app: private and group conversations, instant delivery, typing indicators, read receipts, online presence and unread counts. Built with **TypeScript, Node.js, Express 5, Socket.IO 4, MongoDB (Mongoose) and JWT authentication**, with a framework-free TypeScript client.
 
 The focus is on how a real chat backend behaves: authenticated sockets, server-side authorization for every room, idempotent message delivery, presence that stays correct across tabs, and clients that recover from disconnects and expired tokens on their own.
