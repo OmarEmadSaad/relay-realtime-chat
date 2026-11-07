@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p client",
+    "prestart": "tsc -p client",
     "start": "node src/server.ts",
     "dev": "tsc -p client && node --watch src/server.ts",
     "dev:client": "tsc -p client --watch --preserveWatchOutput",
@@ -37,7 +38,8 @@
     "mongoose": "^9.10.2",
     "multer": "^2.4.0",
     "socket.io": "^4.8.4",
-    "validator": "^13.15.35"
+    "validator": "^13.15.35",
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -47,7 +49,6 @@
     "@types/node": "^24.19.2",
     "@types/validator": "^13.15.10",
     "mongodb-memory-server": "^11.3.0",
-    "socket.io-client": "^4.8.4",
-    "typescript": "^7.0.2"
+    "socket.io-client": "^4.8.4"
   }
 }
